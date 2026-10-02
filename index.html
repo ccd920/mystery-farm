@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>神秘農場</title>
+  <style>
+    :root {
+      --bg: #f4f7f1;
+      --card: #ffffff;
+      --text: #1f2a1c;
+      --muted: #6b7866;
+      --accent: #3f8f3a;
+      --accent-hover: #327530;
+      --border: #dfe7da;
+      --rate: #d9822b;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141a13;
+        --card: #1e261c;
+        --text: #e8efe5;
+        --muted: #9aa894;
+        --accent: #5cb455;
+        --accent-hover: #6fc868;
+        --border: #2d3a2a;
+        --rate: #f0a050;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px 16px 48px;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 24px; }
+    h1 { font-size: clamp(1.8rem, 6vw, 2.4rem); letter-spacing: 0.05em; }
+    .update {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 14px;
+      border-radius: 999px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .list { display: grid; gap: 12px; grid-template-columns: 1fr; }
+    @media (min-width: 600px) { .list { grid-template-columns: 1fr 1fr; } }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .name { font-size: 1.15rem; font-weight: 700; }
+    .name .rate { color: var(--rate); margin-left: 4px; }
+    .name .sep { margin: 0 6px; color: var(--border); }
+    .code-row { display: flex; align-items: center; gap: 10px; }
+    .code {
+      flex: 1;
+      font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      font-size: 1.25rem;
+      letter-spacing: 0.08em;
+    }
+    button.copy {
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      min-width: 72px;
+      transition: background 0.15s;
+    }
+    button.copy:hover { background: var(--accent-hover); }
+    button.copy.done { background: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>神秘農場</h1>
+      <div class="update">每日 8:00、20:00 更新</div>
+    </header>
+    <main class="list" id="list"></main>
+  </div>
+
+  <script>
+    // 要修改內容只要改這裡
+    const data = [
+      { pets: [["果蛙", "200%"]], code: "20144075" },
+      { pets: [["熊貓", "196%"]], code: "10327772" },
+      { pets: [["蝙蝠", "182%"]], code: "10613463" },
+      { pets: [["果蛙", "170%"], ["水兔", "169%"]], code: "10016173" },
+      { pets: [["神鴞", "169%"]], code: "20144075" },
+      { pets: [["海兔", "160%"]], code: "10327772" },
+      { pets: [["小骨魚", "158%"]], code: "20144075" },
+    ];
+
+    const list = document.getElementById("list");
+    data.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "card";
+      const name = item.pets
+        .map(([n, r]) => `${n}<span class="rate">${r}</span>`)
+        .join('<span class="sep">|</span>');
+      card.innerHTML = `
+        <div class="name">${name}</div>
+        <div class="code-row">
+          <span class="code">${item.code}</span>
+          <button class="copy" data-code="${item.code}">複製</button>
+        </div>`;
+      list.appendChild(card);
+    });
+
+    function fallbackCopy(text) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+
+    list.addEventListener("click", async e => {
+      const btn = e.target.closest("button.copy");
+      if (!btn) return;
+      const code = btn.dataset.code;
+      try {
+        await navigator.clipboard.writeText(code);
+      } catch {
+        fallbackCopy(code);
+      }
+      btn.textContent = "已複製";
+      btn.classList.add("done");
+      setTimeout(() => {
+        btn.textContent = "複製";
+        btn.classList.remove("done");
+      }, 1500);
+    });
+  </script>
+</body>
+</html>
