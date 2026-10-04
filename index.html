@@ -12,8 +12,10 @@
       --muted: #6b7866;
       --accent: #3f8f3a;
       --accent-hover: #327530;
+      --accent-soft: #e4f1e1;
       --border: #dfe7da;
       --rate: #d9822b;
+      --chip: #f3f6f1;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -23,8 +25,10 @@
         --muted: #9aa894;
         --accent: #5cb455;
         --accent-hover: #6fc868;
+        --accent-soft: #263a23;
         --border: #2d3a2a;
         --rate: #f0a050;
+        --chip: #252f23;
       }
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -35,8 +39,8 @@
       line-height: 1.5;
       padding: 24px 16px 48px;
     }
-    .wrap { max-width: 720px; margin: 0 auto; }
-    header { text-align: center; margin-bottom: 24px; }
+    .wrap { max-width: 860px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 20px; }
     h1 { font-size: clamp(1.8rem, 6vw, 2.4rem); letter-spacing: 0.05em; }
     .update {
       display: inline-block;
@@ -48,28 +52,79 @@
       color: var(--muted);
       font-size: 0.95rem;
     }
+
+    /* 篩選按鈕 */
+    .filters {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--bg);
+      padding: 10px 0;
+      margin-bottom: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+    .filters button {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .filters button:hover { border-color: var(--accent); }
+    .filters button.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .sort-hint {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 14px;
+    }
+
+    /* 卡片 */
     .list { display: grid; gap: 12px; grid-template-columns: 1fr; }
-    @media (min-width: 600px) { .list { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 640px) { .list { grid-template-columns: 1fr 1fr; } }
     .card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 16px;
+      padding: 14px 16px 16px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
-    .name { font-size: 1.15rem; font-weight: 700; }
-    .name .rate { color: var(--rate); margin-left: 4px; }
-    .name .sep { margin: 0 6px; color: var(--border); }
-    .code-row { display: flex; align-items: center; gap: 10px; }
+    .card.missing { opacity: 0.45; }
+    .card-head { display: flex; align-items: center; gap: 10px; }
+    .rank {
+      flex: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 0.9rem;
+      display: grid;
+      place-items: center;
+    }
     .code {
       flex: 1;
       font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
       font-size: 1.25rem;
       letter-spacing: 0.08em;
+      font-weight: 600;
     }
     button.copy {
+      flex: none;
       border: none;
       background: var(--accent);
       color: #fff;
@@ -83,6 +138,27 @@
     }
     button.copy:hover { background: var(--accent-hover); }
     button.copy.done { background: var(--muted); }
+
+    .pets {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .pet {
+      background: var(--chip);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 6px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 4px;
+      font-size: 0.95rem;
+    }
+    .pet .rate { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .pet.hl { background: var(--accent-soft); border-color: var(--accent); }
+    .pet.hl .rate { color: var(--rate); }
+    .pet.none { opacity: 0.4; }
   </style>
 </head>
 <body>
@@ -91,35 +167,113 @@
       <h1>神秘農場</h1>
       <div class="update">每日 8:00、20:00 更新</div>
     </header>
+    <nav class="filters" id="filters"></nav>
+    <p class="sort-hint" id="hint"></p>
     <main class="list" id="list"></main>
   </div>
 
   <script>
-    // 要修改內容只要改這裡
-    const data = [
-      { pets: [["果蛙", "200%"]], code: "20144075" },
-      { pets: [["熊貓", "196%"]], code: "10327772" },
-      { pets: [["蝙蝠", "182%"]], code: "10613463" },
-      { pets: [["果蛙", "170%"], ["水兔", "169%"]], code: "10016173" },
-      { pets: [["神鴞", "169%"]], code: "20144075" },
-      { pets: [["海兔", "160%"]], code: "10327772" },
-      { pets: [["小骨魚", "158%"]], code: "20144075" },
-    ];
+    // ====== 要新增或修改資料只要改這裡 ======
+    // 格式：ID|寵物 數值 %|寵物 數值 %|...
+    // 同一個 ID 出現多次會自動合併（同寵物取較高的數值）
+    const RAW = `
+20144075|果蛙 200 %|神鴞 169 %|骨魚 158 %|
+10327772|熊貓 196 %|海兔 160 %|
+10613463|蝙蝠 182 %|
+10016173|果蛙 170 %|海兔 169 %|
+10063379|蝙蝠 158 %|骨魚 163 %|海兔 173 %|神鴞 191 %|熊貓 162 %|果蛙 177 %|
+10066347|蝙蝠 189 %|骨魚 155 %|海兔 182 %|神鴞 136 %|熊貓 179 %|果蛙 196 %|
+10094485|蝙蝠 121 %|骨魚 122 %|海兔 206 %|神鴞 128 %|熊貓 159 %|果蛙 195 %|
+10136280|蝙蝠 155 %|骨魚 158 %|海兔 165 %|神鴞 243 %|熊貓 157 %|果蛙 175 %|
+10201365|蝙蝠 153 %|骨魚 105 %|海兔 168 %|神鴞 148 %|熊貓 235 %|果蛙 160 %|
+11709768|蝙蝠 113 %|骨魚 121 %|海兔 162 %|神鴞 152 %|熊貓 151 %|果蛙 112 %|
+12786241|蝙蝠 185 %|骨魚 121 %|海兔 152 %|神鴞 131 %|熊貓 156 %|果蛙 149 %|
+12789479|蝙蝠 149 %|骨魚 111 %|海兔 157 %|神鴞 200 %|熊貓 157 %|果蛙 145 %|
+17207086|蝙蝠 150 %|骨魚 109 %|海兔 121 %|神鴞 199 %|熊貓 161 %|果蛙 110 %|
+17501130|蝙蝠 247 %|骨魚 188 %|海兔 220 %|神鴞 210 %|熊貓 197 %|果蛙 162 %|
+17618434|蝙蝠 132 %|骨魚 121 %|海兔 244 %|神鴞 153 %|熊貓 245 %|果蛙 158 %|
+20475501|蝙蝠 263 %|骨魚 203 %|海兔 263 %|神鴞 263 %|熊貓 204 %|果蛙 263 %|
+`;
+    // 篩選按鈕與卡片內的寵物順序
+    const PETS = ["蝙蝠", "骨魚", "海兔", "神鴞", "熊貓", "果蛙"];
+    // ======================================
 
-    const list = document.getElementById("list");
-    data.forEach(item => {
-      const card = document.createElement("div");
-      card.className = "card";
-      const name = item.pets
-        .map(([n, r]) => `${n}<span class="rate">${r}</span>`)
-        .join('<span class="sep">|</span>');
-      card.innerHTML = `
-        <div class="name">${name}</div>
-        <div class="code-row">
-          <span class="code">${item.code}</span>
-          <button class="copy" data-code="${item.code}">複製</button>
-        </div>`;
-      list.appendChild(card);
+    function parse(raw) {
+      const map = new Map();
+      raw.split("\n").forEach(line => {
+        const parts = line.split("|").map(s => s.trim()).filter(Boolean);
+        if (parts.length < 2) return;
+        const id = parts[0];
+        const pets = map.get(id) || {};
+        parts.slice(1).forEach(p => {
+          const m = p.match(/^(.+?)\s*(\d+(?:\.\d+)?)\s*%?$/);
+          if (!m) return;
+          const name = m[1].trim();
+          const val = Number(m[2]);
+          if (!(name in pets) || val > pets[name]) pets[name] = val;
+        });
+        map.set(id, pets);
+      });
+      return [...map].map(([id, pets]) => ({
+        id,
+        pets,
+        max: Math.max(...Object.values(pets)),
+      }));
+    }
+
+    const data = parse(RAW);
+    let current = "all";
+
+    const filtersEl = document.getElementById("filters");
+    const listEl = document.getElementById("list");
+    const hintEl = document.getElementById("hint");
+
+    function renderFilters() {
+      const opts = [["all", "全部"], ...PETS.map(p => [p, p])];
+      filtersEl.innerHTML = opts
+        .map(([key, label]) =>
+          `<button data-pet="${key}" class="${key === current ? "active" : ""}">${label}</button>`)
+        .join("");
+    }
+
+    function render() {
+      const score = d => current === "all" ? d.max : (d.pets[current] ?? -1);
+      const sorted = [...data].sort((a, b) => score(b) - score(a) || b.max - a.max);
+
+      hintEl.textContent = current === "all"
+        ? "依各 ID 最高的寵物 % 排序"
+        : `依「${current}」% 排序`;
+
+      listEl.innerHTML = sorted.map((d, i) => {
+        // 卡片內：先列固定六種寵物，再列其他寵物（不在 PETS 清單內的）
+        const names = [...PETS, ...Object.keys(d.pets).filter(n => !PETS.includes(n))];
+        const chips = names.map(n => {
+          const v = d.pets[n];
+          const has = v !== undefined;
+          const hl = has && (current === "all" ? v === d.max : n === current);
+          return `<div class="pet${hl ? " hl" : ""}${has ? "" : " none"}">
+            <span>${n}</span><span class="rate">${has ? v + "%" : "—"}</span>
+          </div>`;
+        }).join("");
+        const missing = current !== "all" && d.pets[current] === undefined;
+        return `
+          <div class="card${missing ? " missing" : ""}">
+            <div class="card-head">
+              <span class="rank">${i + 1}</span>
+              <span class="code">${d.id}</span>
+              <button class="copy" data-code="${d.id}">複製</button>
+            </div>
+            <div class="pets">${chips}</div>
+          </div>`;
+      }).join("");
+    }
+
+    filtersEl.addEventListener("click", e => {
+      const btn = e.target.closest("button[data-pet]");
+      if (!btn) return;
+      current = btn.dataset.pet;
+      renderFilters();
+      render();
     });
 
     function fallbackCopy(text) {
@@ -133,7 +287,7 @@
       document.body.removeChild(ta);
     }
 
-    list.addEventListener("click", async e => {
+    listEl.addEventListener("click", async e => {
       const btn = e.target.closest("button.copy");
       if (!btn) return;
       const code = btn.dataset.code;
@@ -149,6 +303,9 @@
         btn.classList.remove("done");
       }, 1500);
     });
+
+    renderFilters();
+    render();
   </script>
 </body>
 </html>
