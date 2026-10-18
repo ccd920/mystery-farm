@@ -173,46 +173,30 @@
   </div>
 
   <script>
-    // ====== 要新增或修改資料只要改這裡 ======
-    // 格式：ID|寵物 數值 %|寵物 數值 %|...
-    // 同一個 ID 出現多次會自動合併（同寵物取較高的數值）
-    const RAW = `
-10016173|蝙蝠 154 %|骨魚 90 %|海兔 170 %|神鴞 179 %|熊貓 160 %|果蛙 171 %|
-10327772|蝙蝠 157 %|骨魚 101 %|海兔 162 %|神鴞 102 %|熊貓 198 %|果蛙 151 %|
-10613463|蝙蝠 185 %|骨魚 86 %|海兔 158 %|神鴞 84 %|熊貓 155 %|果蛙 109 %|
-20144075|蝙蝠 114 %|骨魚 158 %|海兔 157 %|神鴞 169 %|熊貓 156 %|果蛙 200 %|
-10063379|蝙蝠 158 %|骨魚 163 %|海兔 173 %|神鴞 191 %|熊貓 162 %|果蛙 177 %|
-10066347|蝙蝠 189 %|骨魚 155 %|海兔 182 %|神鴞 136 %|熊貓 179 %|果蛙 196 %|
-10094485|蝙蝠 121 %|骨魚 122 %|海兔 206 %|神鴞 128 %|熊貓 159 %|果蛙 195 %|
-10136280|蝙蝠 155 %|骨魚 158 %|海兔 165 %|神鴞 243 %|熊貓 157 %|果蛙 175 %|
-10201365|蝙蝠 153 %|骨魚 105 %|海兔 168 %|神鴞 148 %|熊貓 235 %|果蛙 160 %|
-11709768|蝙蝠 113 %|骨魚 121 %|海兔 162 %|神鴞 152 %|熊貓 151 %|果蛙 112 %|
-12786241|蝙蝠 185 %|骨魚 121 %|海兔 152 %|神鴞 131 %|熊貓 156 %|果蛙 149 %|
-12789479|蝙蝠 149 %|骨魚 111 %|海兔 157 %|神鴞 200 %|熊貓 157 %|果蛙 145 %|
-17207086|蝙蝠 150 %|骨魚 109 %|海兔 121 %|神鴞 199 %|熊貓 161 %|果蛙 110 %|
-17501130|蝙蝠 247 %|骨魚 188 %|海兔 220 %|神鴞 210 %|熊貓 197 %|果蛙 162 %|
-17618434|蝙蝠 132 %|骨魚 121 %|海兔 244 %|神鴞 153 %|熊貓 245 %|果蛙 158 %|
-20475501|蝙蝠 263 %|骨魚 203 %|海兔 263 %|神鴞 263 %|熊貓 204 %|果蛙 263 %|
-`;
-    // 篩選按鈕與卡片內的寵物順序
-    const PETS = ["蝙蝠", "骨魚", "海兔", "神鴞", "熊貓", "果蛙"];
-    // ======================================
+    // 資料放在 data.csv：第一列是 ID 和寵物名稱，下面每列一個 ID，數字不用加 %
+    // 空白格代表沒有這隻寵物；同一個 ID 出現多次會自動合併（同寵物取較高的數值）
+    let PETS = [];
+    let data = [];
 
-    function parse(raw) {
+    function parseCSV(text) {
+      const rows = text.replace(/^\uFEFF/, "").split(/\r?\n/)
+        .map(line => line.split(",").map(s => s.trim()))
+        .filter(cols => cols.some(Boolean));
+      const header = rows.shift() || [];
+      PETS = header.slice(1).filter(Boolean);
       const map = new Map();
-      raw.split("\n").forEach(line => {
-        const parts = line.split("|").map(s => s.trim()).filter(Boolean);
-        if (parts.length < 2) return;
-        const id = parts[0];
+      rows.forEach(cols => {
+        const id = cols[0];
+        if (!id) return;
         const pets = map.get(id) || {};
-        parts.slice(1).forEach(p => {
-          const m = p.match(/^(.+?)\s*(\d+(?:\.\d+)?)\s*%?$/);
-          if (!m) return;
-          const name = m[1].trim();
-          const val = Number(m[2]);
+        PETS.forEach((name, i) => {
+          const raw = (cols[i + 1] || "").replace("%", "").trim();
+          if (raw === "") return;
+          const val = Number(raw);
+          if (Number.isNaN(val)) return;
           if (!(name in pets) || val > pets[name]) pets[name] = val;
         });
-        map.set(id, pets);
+        if (Object.keys(pets).length) map.set(id, pets);
       });
       return [...map].map(([id, pets]) => ({
         id,
@@ -221,7 +205,6 @@
       }));
     }
 
-    const data = parse(RAW);
     let current = "all";
 
     const filtersEl = document.getElementById("filters");
@@ -304,8 +287,19 @@
       }, 1500);
     });
 
-    renderFilters();
-    render();
+    fetch("data.csv", { cache: "no-store" })
+      .then(r => {
+        if (!r.ok) throw new Error(r.status);
+        return r.text();
+      })
+      .then(text => {
+        data = parseCSV(text);
+        renderFilters();
+        render();
+      })
+      .catch(() => {
+        hintEl.textContent = "資料載入失敗，請稍後重新整理";
+      });
   </script>
 </body>
 </html>
