@@ -36,91 +36,97 @@
       font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.5;
-      padding: 24px 16px 48px;
+      line-height: 1.4;
+      padding: 10px 16px 32px;
     }
     .wrap { max-width: 860px; margin: 0 auto; }
-    header { text-align: center; margin-bottom: 20px; }
-    h1 { font-size: clamp(1.8rem, 6vw, 2.4rem); letter-spacing: 0.05em; }
-    .update {
-      display: inline-block;
-      margin-top: 8px;
-      padding: 4px 14px;
-      border-radius: 999px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 0.95rem;
+    header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
     }
+    h1 { font-size: 1.35rem; letter-spacing: 0.05em; }
+    .update { color: var(--muted); font-size: 0.8rem; white-space: nowrap; }
 
-    /* 篩選按鈕 */
-    .filters {
+    /* 篩選列（捲動時固定在上方） */
+    .toolbar {
       position: sticky;
       top: 0;
       z-index: 10;
       background: var(--bg);
-      padding: 10px 0;
-      margin-bottom: 8px;
+      padding: 6px 0 8px;
+      margin-bottom: 4px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
+      flex-direction: column;
+      gap: 6px;
     }
-    .filters button {
+    .filters { display: flex; gap: 4px; }
+    .toolbar button {
       border: 1px solid var(--border);
       background: var(--card);
       color: var(--text);
-      font-size: 1rem;
+      font-size: 0.9rem;
       font-weight: 600;
-      padding: 8px 16px;
+      padding: 5px 4px;
       border-radius: 999px;
       cursor: pointer;
+      white-space: nowrap;
       transition: background 0.15s, color 0.15s, border-color 0.15s;
     }
-    .filters button:hover { border-color: var(--accent); }
+    .filters button { flex: 1 1 0; min-width: 0; }
+    .toolbar button:hover { border-color: var(--accent); }
     .filters button.active {
       background: var(--accent);
       border-color: var(--accent);
       color: #fff;
     }
-    .sort-hint {
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.9rem;
-      margin-bottom: 14px;
+    /* 已設定的寵物：橘色框＋打勾 */
+    .filters button.set {
+      border: 2px solid var(--rate);
+      color: var(--rate);
+      padding: 4px 3px;
     }
+    .filters button.set::before { content: "✓"; }
+    .filters button.set.active { color: #fff; }
+    .meta { display: flex; align-items: center; gap: 6px; }
+    .sort-hint { flex: 1; color: var(--muted); font-size: 0.8rem; }
+    .actions button { font-size: 0.8rem; padding: 3px 12px; }
+    .actions button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .actions button:disabled:hover { border-color: var(--border); }
 
     /* 卡片 */
-    .list { display: grid; gap: 12px; grid-template-columns: 1fr; }
+    .list { display: grid; gap: 8px; grid-template-columns: 1fr; }
     @media (min-width: 640px) { .list { grid-template-columns: 1fr 1fr; } }
     .card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px 16px 16px;
+      border-radius: 12px;
+      padding: 8px 10px 10px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 6px;
     }
     .card.missing { opacity: 0.45; }
-    .card-head { display: flex; align-items: center; gap: 10px; }
+    .card-head { display: flex; align-items: center; gap: 8px; }
     .rank {
       flex: none;
-      width: 28px;
-      height: 28px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       background: var(--accent-soft);
       color: var(--accent);
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.75rem;
       display: grid;
       place-items: center;
     }
     .code {
       flex: 1;
       font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-      font-size: 1.25rem;
-      letter-spacing: 0.08em;
+      font-size: 1.1rem;
+      letter-spacing: 0.06em;
       font-weight: 600;
     }
     button.copy {
@@ -128,12 +134,12 @@
       border: none;
       background: var(--accent);
       color: #fff;
-      font-size: 0.95rem;
+      font-size: 0.85rem;
       font-weight: 600;
-      padding: 8px 16px;
+      padding: 5px 12px;
       border-radius: 8px;
       cursor: pointer;
-      min-width: 72px;
+      min-width: 60px;
       transition: background 0.15s;
     }
     button.copy:hover { background: var(--accent-hover); }
@@ -142,18 +148,18 @@
     .pets {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
+      gap: 4px;
     }
     .pet {
       background: var(--chip);
       border: 1px solid transparent;
       border-radius: 8px;
-      padding: 6px 8px;
+      padding: 2px 7px;
       display: flex;
       justify-content: space-between;
       align-items: baseline;
       gap: 4px;
-      font-size: 0.95rem;
+      font-size: 0.85rem;
     }
     .pet .rate { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
     .pet.hl { background: var(--accent-soft); border-color: var(--accent); }
@@ -167,8 +173,16 @@
       <h1>神秘農場</h1>
       <div class="update">每日 8:00、20:00 更新</div>
     </header>
-    <nav class="filters" id="filters"></nav>
-    <p class="sort-hint" id="hint"></p>
+    <div class="toolbar">
+      <nav class="filters" id="filters"></nav>
+      <div class="meta">
+        <p class="sort-hint" id="hint"></p>
+        <div class="actions">
+          <button id="setBtn">已設定</button>
+          <button id="clearBtn">清除</button>
+        </div>
+      </div>
+    </div>
     <main class="list" id="list"></main>
   </div>
 
@@ -207,21 +221,71 @@
 
     let current = "all";
 
+    // 已設定的寵物，存在這台裝置的瀏覽器裡，重新整理後還在
+    const SET_KEY = "mystery-farm-set";
+    let setPets = new Set();
+    try {
+      setPets = new Set(JSON.parse(localStorage.getItem(SET_KEY)) || []);
+    } catch {}
+    function saveSet() {
+      try {
+        localStorage.setItem(SET_KEY, JSON.stringify([...setPets]));
+      } catch {}
+    }
+
     const filtersEl = document.getElementById("filters");
     const listEl = document.getElementById("list");
     const hintEl = document.getElementById("hint");
+    const setBtn = document.getElementById("setBtn");
+    const clearBtn = document.getElementById("clearBtn");
 
     function renderFilters() {
       const opts = [["all", "全部"], ...PETS.map(p => [p, p])];
       filtersEl.innerHTML = opts
-        .map(([key, label]) =>
-          `<button data-pet="${key}" class="${key === current ? "active" : ""}">${label}</button>`)
+        .map(([key, label]) => {
+          const cls = [key === current && "active", setPets.has(key) && "set"].filter(Boolean).join(" ");
+          return `<button data-pet="${key}" class="${cls}">${label}</button>`;
+        })
         .join("");
+      // 「全部」不能設定；已設定的寵物再按一次會取消
+      setBtn.disabled = current === "all";
+      setBtn.textContent = setPets.has(current) ? "取消設定" : "已設定";
+      clearBtn.disabled = setPets.size === 0;
     }
 
+    setBtn.addEventListener("click", () => {
+      if (current === "all") return;
+      if (setPets.has(current)) setPets.delete(current);
+      else setPets.add(current);
+      saveSet();
+      renderFilters();
+    });
+
+    clearBtn.addEventListener("click", () => {
+      setPets.clear();
+      saveSet();
+      renderFilters();
+    });
+
     function render() {
-      const score = d => current === "all" ? d.max : (d.pets[current] ?? -1);
-      const sorted = [...data].sort((a, b) => score(b) - score(a) || b.max - a.max);
+      // 排序鍵：先比選中的寵物，相同時再依該 ID 其他寵物 % 由高到低逐一比較
+      // 「全部」時直接從最高的 % 開始逐一比較；沒有該寵物的排最後
+      const key = d => {
+        const others = Object.entries(d.pets)
+          .filter(([n]) => current === "all" || n !== current)
+          .map(([, v]) => v)
+          .sort((x, y) => y - x);
+        return current === "all" ? others : [d.pets[current] ?? -1, ...others];
+      };
+      const cmp = (a, b) => {
+        const ka = key(a), kb = key(b);
+        for (let i = 0; i < Math.max(ka.length, kb.length); i++) {
+          const diff = (kb[i] ?? -1) - (ka[i] ?? -1);
+          if (diff) return diff;
+        }
+        return 0;
+      };
+      const sorted = [...data].sort(cmp);
 
       hintEl.textContent = current === "all"
         ? "依各 ID 最高的寵物 % 排序"
